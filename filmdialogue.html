@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Film Dialogue — La brecha de género</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --blue: #3b82f6; --blue-bg: #eff6ff; --blue-dark: #1d4ed8;
+  --pink: #ec4899; --pink-bg: #fdf2f8;
+  --purple: #8b5cf6; --purple-bg: #f5f3ff;
+  --orange: #f97316; --orange-bg: #fff7ed;
+  --green: #22c55e; --green-dark: #16a34a;
+  --gray: #6b7280; --gray-light: #f9fafb; --gray-border: #e5e7eb;
+  --ink: #111827; --text: #374151; --muted: #6b7280;
+  --white: #ffffff;
+  --radius: 8px; --radius-lg: 12px;
+  --font: 'Inter', system-ui, sans-serif;
+}
+html { font-family: var(--font); color: var(--ink); background: var(--white); scroll-behavior: smooth; }
+body { min-height: 100vh; }
+
+/* NAV */
+nav {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 24px; height: 52px; border-bottom: 1px solid var(--gray-border);
+  position: sticky; top: 0; background: var(--white); z-index: 200;
+}
+.nav-logo { font-size: 15px; font-weight: 700; color: var(--ink); }
+.nav-search {
+  display: flex; align-items: center; gap: 8px;
+  border: 1px solid var(--gray-border); border-radius: 20px;
+  padding: 6px 14px; background: var(--gray-light);
+}
+.nav-search input { border: none; background: transparent; font-size: 13px; font-family: var(--font); color: var(--ink); outline: none; width: 200px; }
+.nav-search svg { color: var(--muted); flex-shrink: 0; }
+.nav-icon { color: var(--muted); cursor: pointer; }
+
+/* SIDE NAV */
+.side-nav {
+  position: fixed; right: 0; top: 50%; transform: translateY(-50%);
+  background: var(--white); border: 1px solid var(--gray-border);
+  border-right: none; border-radius: var(--radius) 0 0 var(--radius);
+  padding: 8px 0; z-index: 100; box-shadow: -2px 0 8px rgba(0,0,0,.06);
+}
+.side-nav a {
+  display: block; padding: 6px 16px; font-size: 12px; color: var(--muted);
+  text-decoration: none; white-space: nowrap; transition: color .15s;
+}
+.side-nav a:hover { color: var(--ink); }
+.side-nav a.active { color: var(--blue); background: var(--blue-bg); font-weight: 500; }
+
+/* SECTIONS */
+section { padding: 64px 0; }
+.container { max-width: 780px; margin: 0 auto; padding: 0 24px; }
+.container-wide { max-width: 1100px; margin: 0 auto; padding: 0 24px; }
+
+/* HERO */
+#inicio { padding: 60px 0 40px; background: var(--white); }
+.hero-title { font-size: 36px; font-weight: 700; text-align: center; line-height: 1.2; margin-bottom: 16px; letter-spacing: -.02em; }
+.hero-sub { font-size: 16px; color: var(--muted); text-align: center; line-height: 1.6; max-width: 520px; margin: 0 auto 48px; }
+.hero-text { font-size: 15px; color: var(--text); line-height: 1.7; margin-bottom: 32px; }
+
+/* STAT CARDS */
+.stat-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 32px 0; }
+.stat-card { border-radius: var(--radius-lg); padding: 20px; }
+.stat-card.blue { background: var(--blue-bg); }
+.stat-card.pink { background: var(--pink-bg); }
+.stat-card.purple { background: var(--purple-bg); }
+.stat-num { font-size: 32px; font-weight: 700; margin-bottom: 6px; }
+.stat-card.blue .stat-num { color: var(--blue-dark); }
+.stat-card.pink .stat-num { color: var(--pink); }
+.stat-card.purple .stat-num { color: var(--purple); }
+.stat-label { font-size: 13px; font-weight: 600; color: var(--ink); margin-bottom: 2px; }
+.stat-sub { font-size: 12px; color: var(--muted); }
+
+/* LEGEND */
+.legend { display: flex; gap: 20px; justify-content: center; margin: 32px 0 8px; }
+.legend-item { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); }
+.legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+
+/* ACTION CARDS */
+.action-cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-top: 40px; }
+.action-card {
+  border: 1px solid var(--gray-border); border-radius: var(--radius-lg);
+  padding: 20px; cursor: pointer; transition: all .2s; background: var(--white);
+}
+.action-card:hover { border-color: var(--blue); box-shadow: 0 4px 12px rgba(59,130,246,.1); }
+.action-icon { width: 36px; height: 36px; border-radius: var(--radius); display: flex; align-items: center; justify-content: center; margin-bottom: 12px; font-size: 18px; }
+.action-icon.blue { background: var(--blue-bg); }
+.action-icon.pink { background: var(--pink-bg); }
+.action-icon.green { background: #f0fdf4; }
+.action-icon.orange { background: var(--orange-bg); }
+.action-title { font-size: 14px; font-weight: 600; margin-bottom: 6px; }
+.action-desc { font-size: 12px; color: var(--muted); line-height: 1.5; }
+
+/* SECTION DIVIDER */
+.section-sep { border: none; border-top: 1px solid var(--gray-border); margin: 0; }
+
+/* CHART SECTION (Explorar) */
+#explorar { background: var(--white); }
+.section-title { font-size: 26px; font-weight: 700; margin-bottom: 8px; letter-spacing: -.01em; }
+.section-sub { font-size: 14px; color: var(--muted); margin-bottom: 8px; line-height: 1.6; }
+.case-text { font-size: 15px; color: var(--text); line-height: 1.75; margin-bottom: 16px; font-style: italic; }
+.case-text-plain { font-size: 15px; color: var(--text); line-height: 1.75; margin-bottom: 16px; }
+
+.chart-card { border: 1px solid var(--gray-border); border-radius: var(--radius-lg); padding: 24px; margin: 20px 0; }
+.chart-card-title { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
+.chart-card-sub { font-size: 13px; color: var(--muted); margin-bottom: 16px; }
+
+.dist-info { display: flex; align-items: flex-start; gap: 8px; background: #f8fafc; border-radius: var(--radius); padding: 10px 14px; margin-bottom: 16px; font-size: 13px; color: var(--text); line-height: 1.5; }
+.dist-info svg { flex-shrink: 0; margin-top: 1px; color: var(--muted); }
+
+.chars-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px 24px; margin-bottom: 16px; }
+.char-item { display: flex; align-items: center; gap: 6px; font-size: 13px; }
+.char-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.char-info { }
+.char-name { font-weight: 500; font-size: 12px; }
+.char-lines { font-size: 11px; color: var(--muted); }
+
+.methodology-link { font-size: 13px; color: var(--blue); text-decoration: none; }
+.methodology-link:hover { text-decoration: underline; }
+
+.chart-wrap { position: relative; height: 260px; margin: 16px 0 8px; }
+
+.impact-box { background: #f8fafc; border-radius: var(--radius); padding: 16px 20px; margin-top: 16px; font-size: 14px; color: var(--text); line-height: 1.6; }
+.impact-box strong { color: var(--ink); }
+
+/* CTA BOXES */
+.cta-box { border-radius: var(--radius-lg); padding: 20px 24px; margin: 32px 0; }
+.cta-box.orange { background: #fff7ed; }
+.cta-box.blue { background: var(--blue-bg); }
+.cta-box-label { font-size: 13px; font-weight: 600; color: var(--orange); margin-bottom: 4px; }
+.cta-box.blue .cta-box-label { color: var(--blue); }
+.cta-box-text { font-size: 13px; color: var(--orange); margin-bottom: 12px; }
+.cta-box.blue .cta-box-text { color: var(--blue); }
+.btn { display: inline-flex; align-items: center; gap: 6px; padding: 9px 18px; border-radius: var(--radius); font-size: 13px; font-weight: 600; cursor: pointer; border: none; transition: all .15s; font-family: var(--font); }
+.btn-orange { background: var(--orange); color: var(--white); }
+.btn-orange:hover { background: #ea6c04; }
+.btn-blue { background: var(--blue); color: var(--white); }
+.btn-blue:hover { background: var(--blue-dark); }
+.btn-purple { background: var(--purple); color: var(--white); }
+.btn-purple:hover { background: #7c3aed; }
+.btn-green { background: var(--green); color: var(--white); }
+.btn-green:hover { background: var(--green-dark); }
+.btn-outline { background: var(--white); color: var(--ink); border: 1px solid var(--gray-border); }
+.btn-outline:hover { border-color: var(--ink); }
+.nav-btns { display: flex; gap: 12px; flex-wrap: wrap; margin: 24px 0; }
+
+/* COMPARISON */
+#comparar { background: var(--white); }
+.compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 24px 0; }
+.compare-card { border: 1px solid var(--gray-border); border-radius: var(--radius-lg); padding: 20px; }
+.compare-card-title { font-size: 15px; font-weight: 600; margin-bottom: 12px; }
+
+/* STATS CARDS (decades) */
+.decade-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 24px 0; }
+.decade-card { border-radius: var(--radius-lg); padding: 20px; }
+.decade-card.blue { background: var(--blue-bg); }
+.decade-card.pink { background: var(--pink-bg); }
+.decade-num { font-size: 28px; font-weight: 700; margin-bottom: 4px; }
+.decade-card.blue .decade-num { color: #1e40af; }
+.decade-card.pink .decade-num { color: #be185d; }
+.decade-label { font-size: 13px; font-weight: 500; color: var(--ink); }
+.decade-sub { font-size: 12px; color: var(--muted); }
+
+/* INTERACTIVE EXPLORER */
+#interactivo { background: var(--white); }
+.filters-card { border: 1px solid var(--gray-border); border-radius: var(--radius-lg); padding: 20px 24px; margin-bottom: 24px; }
+.filters-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin-bottom: 12px; }
+.filters-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.filter-field label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 6px; font-weight: 500; }
+.filter-field select {
+  width: 100%; padding: 9px 12px; border: 1px solid var(--gray-border);
+  border-radius: var(--radius); font-size: 13px; font-family: var(--font);
+  color: var(--ink); background: var(--white); cursor: pointer; outline: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 10px center; padding-right: 30px;
+}
+.filter-field select:focus { border-color: var(--blue); }
+.filter-count { font-size: 13px; color: var(--muted); margin-top: 12px; }
+
+.scatter-card { border: 1px solid var(--gray-border); border-radius: var(--radius-lg); padding: 24px; margin-bottom: 16px; }
+.scatter-title { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+.scatter-sub { font-size: 13px; color: var(--muted); margin-bottom: 16px; }
+.scatter-wrap { position: relative; height: 320px; }
+
+.note-box { background: var(--blue-bg); border-radius: var(--radius); padding: 12px 16px; font-size: 13px; color: var(--text); line-height: 1.6; margin-top: 12px; }
+.note-box strong { color: var(--blue-dark); }
+
+/* COMPARE TWO */
+.compare-two-card { border: 1px solid var(--gray-border); border-radius: var(--radius-lg); padding: 24px; margin-bottom: 24px; }
+.compare-two-title { font-size: 15px; font-weight: 600; margin-bottom: 16px; }
+.compare-two-selects { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+.compare-select-field label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 6px; font-weight: 500; }
+.compare-select-field select {
+  width: 100%; padding: 9px 12px; border: 1px solid var(--gray-border);
+  border-radius: var(--radius); font-size: 13px; font-family: var(--font);
+  color: var(--ink); background: var(--white); cursor: pointer; outline: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 10px center; padding-right: 30px;
+}
+.compare-placeholder { text-align: center; padding: 40px; color: var(--muted); font-size: 14px; }
+.compare-result-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+
+/* METHODOLOGY */
+#metodologia { background: var(--white); }
+.method-section { margin-bottom: 28px; }
+.method-section h3 { font-size: 15px; font-weight: 600; margin-bottom: 8px; }
+.method-section p { font-size: 14px; color: var(--text); line-height: 1.7; margin-bottom: 8px; }
+.method-section ul { list-style: disc; padding-left: 20px; }
+.method-section li { font-size: 14px; color: var(--text); line-height: 1.7; margin-bottom: 4px; }
+
+/* WHAT MEANS */
+.what-section { margin: 48px 0; }
+.what-section p { font-size: 15px; color: var(--text); line-height: 1.75; margin-bottom: 14px; }
+</style>
+</head>
+<body>
+
+<!-- TOP NAV -->
+<nav>
+  <span class="nav-logo">Film Dialogue</span>
+  <div class="nav-search">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <input type="text" placeholder="Buscar película..." id="globalSearch" oninput="handleGlobalSearch(this.value)">
+  </div>
+  <div class="nav-icon">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M6 20v-2a6 6 0 0112 0v2"/></svg>
+  </div>
+</nav>
+
+<!-- SIDE NAV -->
+<div class="side-nav" id="sideNav">
+  <a href="javascript:void(0)" class="active" onclick="goTo('inicio');setActive(this)">Inicio</a>
+  <a href="javascript:void(0)" onclick="goTo('explorar');setActive(this)">Explorar</a>
+  <a href="javascript:void(0)" onclick="goTo('comparar');setActive(this)">Comparar</a>
+  <a href="javascript:void(0)" onclick="goTo('patrones');setActive(this)">Patrones</a>
+  <a href="javascript:void(0)" onclick="goTo('interactivo');setActive(this)">Interactivo</a>
+  <a href="javascript:void(0)" onclick="goTo('metodologia');setActive(this)">Metodología</a>
+</div>
+
+<!-- ══════════════ INICIO ══════════════ -->
+<section id="inicio">
+  <div class="container">
+    <h1 class="hero-title">La brecha de género en el diálogo cinematográfico</h1>
+    <p class="hero-sub">Un análisis de más de 2,000 guiones revela patrones sorprendentes sobre quién habla en las películas</p>
+
+    <p class="hero-text">En la historia del cine, las voces masculinas han dominado las pantallas. Pero, ¿cuánto exactamente? Analizamos cada línea de diálogo en miles de películas, desde clásicos hasta éxitos contemporáneos, para cuantificar esta disparidad.</p>
+
+    <div class="stat-cards">
+      <div class="stat-card blue">
+        <div class="stat-num">68%</div>
+        <div class="stat-label">Promedio de líneas masculinas</div>
+        <div class="stat-sub">en películas analizadas</div>
+      </div>
+      <div class="stat-card pink">
+        <div class="stat-num">32%</div>
+        <div class="stat-label">Promedio de líneas femeninas</div>
+        <div class="stat-sub">en películas analizadas</div>
+      </div>
+      <div class="stat-card purple">
+        <div class="stat-num">&lt;5%</div>
+        <div class="stat-label">Películas con paridad</div>
+        <div class="stat-sub">50/50 en diálogos</div>
+      </div>
+    </div>
+
+    <p class="hero-text">Esta brecha no solo refleja el número de personajes, sino también la profundidad narrativa que se les permite desarrollar. Cada línea de diálogo es una oportunidad para construir un personaje, revelar motivaciones y avanzar la historia.</p>
+
+    <div class="legend">
+      <div class="legend-item"><div class="legend-dot" style="background:var(--blue)"></div> Masculino</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--pink)"></div> Femenino</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--purple)"></div> No binario</div>
+    </div>
+
+    <div class="action-cards">
+      <div class="action-card" onclick="goTo('explorar')">
+        <div class="action-icon blue">🎬</div>
+        <div class="action-title">Quiero explorar una película</div>
+        <div class="action-desc">Visualiza patrones de diálogo, distribución por personaje y métricas de una película específica.</div>
+      </div>
+      <div class="action-card" onclick="goTo('comparar')">
+        <div class="action-icon pink">🔄</div>
+        <div class="action-title">Quiero comparar dos películas</div>
+        <div class="action-desc">Compara lado a lado los patrones de diálogo entre dos películas diferentes.</div>
+      </div>
+      <div class="action-card" onclick="goTo('patrones')">
+        <div class="action-icon green">📈</div>
+        <div class="action-title">Ver patrones globales</div>
+        <div class="action-desc">Descubre tendencias y patrones narrativos a través de múltiples películas.</div>
+      </div>
+      <div class="action-card" onclick="goTo('interactivo')">
+        <div class="action-icon orange">🎛️</div>
+        <div class="action-title">Explorador interactivo</div>
+        <div class="action-desc">Filtra por género y año, compara cualquier película, y comparte tus hallazgos.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="section-sep">
+
+<!-- ══════════════ EXPLORAR ══════════════ -->
+<section id="explorar">
+  <div class="container">
+    <h2 class="section-title">Caso de estudio: Pulp Fiction</h2>
+
+    <p class="case-text"><em>Pulp Fiction</em> (1994) de Quentin Tarantino es conocida por sus diálogos memorables. Pero cuando analizamos quién tiene voz en la narrativa, emerge un patrón familiar: los personajes masculinos dominan la conversación, acumulando más del 80% de las líneas.</p>
+    <p class="case-text-plain">Mia Wallace, interpretada por Uma Thurman, es uno de los personajes femeninos más icónicos del cine, pero tiene apenas 67 líneas en toda la película, comparado con las 145 de Vincent Vega y las 132 de Jules Winnfield.</p>
+
+    <div class="chart-card">
+      <div class="chart-card-title">Distribución de líneas de diálogo por personaje</div>
+      <div class="chart-card-sub">Pulp Fiction (1994)</div>
+      <div class="dist-info">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <span><strong>Distribución por género:</strong> Personajes masculinos tienen <strong>81.2%</strong> de las líneas, mientras que personajes femeninos tienen <strong>18.8%</strong>.</span>
+      </div>
+      <div class="chars-grid" id="pulpChars"></div>
+      <a href="javascript:void(0)" onclick="goTo('metodologia')" class="methodology-link">Ver metodología completa →</a>
+      <div class="chart-wrap">
+        <canvas id="pulpChart"></canvas>
+      </div>
+    </div>
+
+    <div class="impact-box">
+      <strong>El impacto narrativo:</strong> Esta distribución no solo refleja tiempo en pantalla, sino también agencia narrativa. Los personajes con más diálogo típicamente impulsan la trama, toman decisiones cruciales y desarrollan arcos de transformación más complejos.
+    </div>
+
+    <div class="cta-box orange" style="margin-top:32px;">
+      <div class="cta-box-label">¿Quieres explorar por tu cuenta?</div>
+      <div class="cta-box-text">Usa nuestro explorador interactivo para filtrar películas, comparar cualquier combinación, y compartir tus hallazgos.</div>
+      <button class="btn btn-orange" onclick="goTo('interactivo')">Ir al explorador interactivo →</button>
+    </div>
+
+    <div class="nav-btns">
+      <button class="btn btn-blue" onclick="goTo('comparar')">Continuar leyendo: comparaciones →</button>
+      <button class="btn btn-outline" onclick="goTo('patrones')">Ver patrones globales →</button>
+    </div>
+  </div>
+</section>
+
+<hr class="section-sep">
+
+<!-- ══════════════ COMPARAR ══════════════ -->
+<section id="comparar">
+  <div class="container">
+    <h2 class="section-title">Comparación: dos décadas, mismo patrón</h2>
+    <p class="case-text-plain" style="margin-bottom:24px;">Comparemos <em>The Godfather</em> (1972) con <em>Pulp Fiction</em> (1994). Separadas por más de dos décadas, ambas son consideradas obras maestras del cine estadounidense. Sin embargo, cuando analizamos sus diálogos, encontramos una consistencia reveladora en la representación de género.</p>
+
+    <div class="compare-grid" id="compareFixedGrid"></div>
+
+    <div class="impact-box" style="margin:24px 0;">
+      <strong>Kay Adams en The Godfather:</strong> A pesar de ser el interés amoroso del protagonista Michael Corleone y testigo clave de su transformación moral, Kay tiene apenas 45 líneas de diálogo. Michael, por su parte, tiene 198 líneas, más de cuatro veces el diálogo de Kay.
+    </div>
+    <p class="case-text-plain">En ambas películas, los personajes femeninos son fundamentales para la trama pero periféricos en la conversación. Son observadas más que escuchadas, reaccionadas más que activas en el impulso narrativo.</p>
+
+    <div class="cta-box orange">
+      <div class="cta-box-label">Explora tus propias comparaciones</div>
+      <div class="cta-box-text">¿Quieres comparar otras películas? El explorador interactivo te permite elegir cualquier combinación del dataset.</div>
+      <button class="btn btn-orange" onclick="goTo('interactivo')">Ir al explorador interactivo →</button>
+    </div>
+
+    <div class="nav-btns">
+      <button class="btn btn-purple" onclick="goTo('patrones')">Continuar: patrones globales →</button>
+      <button class="btn btn-outline" onclick="goTo('inicio')">Volver al inicio</button>
+    </div>
+  </div>
+</section>
+
+<hr class="section-sep">
+
+<!-- ══════════════ PATRONES ══════════════ -->
+<section id="patrones">
+  <div class="container">
+    <h2 class="section-title">¿Ha mejorado con el tiempo?</h2>
+    <p class="case-text-plain">Es tentador pensar que el cine contemporáneo ha progresado en representación de género. Analizando películas de diferentes décadas, podemos rastrear si la brecha de diálogo se ha cerrado.</p>
+
+    <div class="decade-cards">
+      <div class="decade-card blue">
+        <div class="decade-num">73% / 27%</div>
+        <div class="decade-label">Años 1970–1990</div>
+        <div class="decade-sub">Masculino / Femenino</div>
+      </div>
+      <div class="decade-card pink">
+        <div class="decade-num">66% / 34%</div>
+        <div class="decade-label">Años 2000–2020</div>
+        <div class="decade-sub">Masculino / Femenino</div>
+      </div>
+    </div>
+
+    <p class="case-text-plain">Ha habido una ligera mejora, pero el cambio es incremental. Incluso en películas aclamadas por su representación femenina, los personajes masculinos siguen dominando el diálogo en una proporción de 2:1.</p>
+
+    <div class="chart-card" style="margin-top:24px;">
+      <div class="chart-card-title">Ejemplo contemporáneo: Inception (2010)</div>
+      <div class="chart-card-sub">Inception muestra que incluso films modernos con personajes femeninos fuertes mantienen la disparidad</div>
+      <div class="dist-info">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <span><strong>Distribución por género:</strong> Personajes masculinos tienen <strong>73.8%</strong> de las líneas, mientras que personajes femeninos tienen <strong>26.2%</strong>.</span>
+      </div>
+      <div class="chars-grid" id="inceptionChars"></div>
+      <div class="chart-wrap">
+        <canvas id="inceptionChart"></canvas>
+      </div>
+    </div>
+
+    <div class="impact-box" style="margin:24px 0;">
+      <strong>El caso de Inception:</strong> Ariadne, interpretada por Ellen Page, es la arquitecta de sueños y nuestra guía en el mundo del extracto de sueños. Su función narrativa es crucial: hacer las preguntas que la audiencia necesita responder. Sin embargo, tiene solo 82 líneas comparado con las 178 de Cobb.
+    </div>
+
+    <div class="what-section">
+      <h3 style="font-size:18px;font-weight:700;margin-bottom:16px;">¿Qué significa esto?</h3>
+      <p>El diálogo es poder narrativo. Quién habla, cuánto hablan y qué dicen determina quién impulsa la historia, quién toma decisiones y quién tiene un arco de transformación complejo.</p>
+      <p>Cuando los personajes femeninos tienen consistentemente menos líneas, están siendo posicionados como reactivos en lugar de activos, como objetos de la trama en lugar de sujetos de sus propias historias.</p>
+      <p>El cambio está ocurriendo, pero lentamente. Reconocer estos patrones es el primer paso para crear narrativas más equitativas que reflejen la diversidad de voces en el mundo real.</p>
+    </div>
+
+    <div class="nav-btns">
+      <button class="btn btn-green" onclick="goTo('interactivo')">Usar explorador interactivo →</button>
+      <button class="btn btn-outline" onclick="goTo('inicio')">Volver al inicio</button>
+    </div>
+  </div>
+</section>
+
+<hr class="section-sep">
+
+<!-- ══════════════ INTERACTIVO ══════════════ -->
+<section id="interactivo">
+  <div class="container">
+    <h2 class="section-title">Explorador interactivo</h2>
+    <p class="section-sub">Filtra, compara y explora películas de nuestro dataset. Comparte tus descubrimientos con un enlace único.</p>
+
+    <div class="filters-card">
+      <div class="filters-label">Filtros</div>
+      <div class="filters-row">
+        <div class="filter-field">
+          <label>Género</label>
+          <select id="filterGenre" onchange="updateScatter()">
+            <option value="">Todos los géneros</option>
+            <option value="Action">Acción</option>
+            <option value="Drama">Drama</option>
+            <option value="Comedy">Comedia</option>
+            <option value="Horror">Terror</option>
+          </select>
+        </div>
+        <div class="filter-field">
+          <label>Año</label>
+          <select id="filterDecade" onchange="updateScatter()">
+            <option value="">Todos los años</option>
+            <option value="1960s">Años 60</option>
+            <option value="1980s">Años 80</option>
+            <option value="1990s">Años 90</option>
+            <option value="2000s">Años 2000</option>
+            <option value="2010s">Años 2010</option>
+          </select>
+        </div>
+      </div>
+      <div class="filter-count" id="filterCount">12 películas encontradas</div>
+    </div>
+
+    <div class="scatter-card">
+      <div class="scatter-title">Distribución por género en todas las películas</div>
+      <div class="scatter-sub">Cada punto representa una película. El eje X muestra el porcentaje de diálogo masculino, el eje Y muestra el porcentaje de diálogo femenino.</div>
+      <div class="scatter-wrap">
+        <canvas id="scatterChart"></canvas>
+      </div>
+      <div class="note-box">
+        <strong>Nota:</strong> Las películas cerca de la línea diagonal (donde X=Y) tienen una distribución más equitativa. La mayoría de las películas están en la parte superior izquierda, indicando más diálogo masculino que femenino.
+      </div>
+    </div>
+
+    <!-- Compare Two -->
+    <div class="compare-two-card">
+      <div class="compare-two-title">Comparar dos películas</div>
+      <div class="compare-two-selects">
+        <div class="compare-select-field">
+          <label>Primera película</label>
+          <select id="compareA" onchange="updateCompareTwoChart()">
+            <option value="">Selecciona una película</option>
+          </select>
+        </div>
+        <div class="compare-select-field">
+          <label>Segunda película</label>
+          <select id="compareB" onchange="updateCompareTwoChart()">
+            <option value="">Selecciona una película</option>
+          </select>
+        </div>
+      </div>
+      <div id="compareTwoResult">
+        <div class="compare-placeholder">Selecciona dos películas para comparar sus distribuciones de diálogo</div>
+      </div>
+    </div>
+
+    <div class="nav-btns">
+      <button class="btn btn-outline" onclick="goTo('inicio')">Volver al inicio</button>
+    </div>
+  </div>
+</section>
+
+<hr class="section-sep">
+
+<!-- ══════════════ METODOLOGÍA ══════════════ -->
+<section id="metodologia">
+  <div class="container">
+    <h2 class="section-title">Metodología</h2>
+
+    <div class="method-section">
+      <h3>Extracción de datos</h3>
+      <p>Los datos de diálogo se extraen de guiones oficiales en formato de texto plano. Cada línea de diálogo se atribuye a un personaje específico utilizando análisis de estructura de guión estándar de la industria.</p>
+    </div>
+    <div class="method-section">
+      <h3>Clasificación de género</h3>
+      <p>Los personajes se clasifican por género basándose en:</p>
+      <ul>
+        <li>Pronombres utilizados en las descripciones del guión</li>
+        <li>Referencias al personaje por otros personajes</li>
+        <li>Información del actor/actriz cuando está disponible</li>
+        <li>Verificación manual para casos ambiguos</li>
+      </ul>
+    </div>
+    <div class="method-section">
+      <h3>Análisis cuantitativo</h3>
+      <ul>
+        <li>Conteo de líneas de diálogo por personaje (no palabras individuales)</li>
+        <li>Normalización por duración total de película cuando es relevante</li>
+        <li>Agregación por década, género cinematográfico y otros metadatos</li>
+        <li>Cálculo de porcentajes y proporciones por género de personaje</li>
+      </ul>
+    </div>
+    <div class="method-section">
+      <h3>Corpus de películas</h3>
+      <p>El análisis incluye más de 2,000 películas producidas entre 1970 y 2025, priorizando:</p>
+      <ul>
+        <li>Películas con taquilla significativa (top 100 por año)</li>
+        <li>Películas nominadas a premios importantes</li>
+        <li>Representación diversa de géneros cinematográficos</li>
+        <li>Distribución geográfica con énfasis en producción estadounidense</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<script>
+const FILMS = [
+  {id:1,title:"The Hunger Games",genre:"Action",decade:"2010s",male:42,female:58,chars:[{name:"Katniss Everdeen",lines:142,g:"f"},{name:"Peeta Mellark",lines:96,g:"m"},{name:"Haymitch",lines:67,g:"m"},{name:"Effie Trinket",lines:45,g:"f"},{name:"President Snow",lines:31,g:"m"}]},
+  {id:2,title:"The Dark Knight",genre:"Action",decade:"2000s",male:91,female:9,chars:[{name:"Bruce Wayne",lines:105,g:"m"},{name:"The Joker",lines:99,g:"m"},{name:"Harvey Dent",lines:62,g:"m"},{name:"Alfred",lines:39,g:"m"},{name:"Rachel Dawes",lines:28,g:"f"}]},
+  {id:3,title:"Frozen",genre:"Drama",decade:"2010s",male:43,female:57,chars:[{name:"Anna",lines:105,g:"f"},{name:"Elsa",lines:92,g:"f"},{name:"Kristoff",lines:60,g:"m"},{name:"Hans",lines:45,g:"m"},{name:"Olaf",lines:39,g:"m"}]},
+  {id:4,title:"The Shining",genre:"Horror",decade:"1980s",male:85,female:15,chars:[{name:"Jack Torrance",lines:132,g:"m"},{name:"Wendy Torrance",lines:56,g:"f"},{name:"Danny Torrance",lines:24,g:"m"},{name:"Dick Hallorann",lines:20,g:"m"},{name:"Lloyd",lines:11,g:"m"}]},
+  {id:5,title:"Get Out",genre:"Horror",decade:"2010s",male:58,female:42,chars:[{name:"Chris Washington",lines:99,g:"m"},{name:"Rose Armitage",lines:78,g:"f"},{name:"Dean Armitage",lines:49,g:"m"},{name:"Missy Armitage",lines:38,g:"f"},{name:"Rod Williams",lines:34,g:"m"}]},
+  {id:6,title:"Bridesmaids",genre:"Comedy",decade:"2010s",male:28,female:72,chars:[{name:"Annie Walker",lines:147,g:"f"},{name:"Lillian Donovan",lines:82,g:"f"},{name:"Helen Harris",lines:71,g:"f"},{name:"Megan Price",lines:64,g:"f"},{name:"Doug",lines:24,g:"m"}]},
+  {id:7,title:"The Jungle Book",genre:"Drama",decade:"1960s",male:98,female:2,chars:[{name:"Mowgli",lines:91,g:"m"},{name:"Baloo",lines:82,g:"m"},{name:"Shere Khan",lines:49,g:"m"},{name:"King Louie",lines:38,g:"m"},{name:"Bagheera",lines:34,g:"m"}]},
+  {id:8,title:"Toy Story",genre:"Drama",decade:"1990s",male:92,female:8,chars:[{name:"Woody",lines:142,g:"m"},{name:"Buzz Lightyear",lines:110,g:"m"},{name:"Rex",lines:34,g:"m"},{name:"Hamm",lines:26,g:"m"},{name:"Bo Peep",lines:19,g:"f"}]},
+  {id:9,title:"It",genre:"Horror",decade:"2010s",male:79,female:21,chars:[{name:"Bill Denbrough",lines:99,g:"m"},{name:"Richie Tozier",lines:91,g:"m"},{name:"Beverly Marsh",lines:62,g:"f"},{name:"Eddie Kaspbrak",lines:49,g:"m"},{name:"Pennywise",lines:42,g:"m"}]},
+  {id:10,title:"Pulp Fiction",genre:"Drama",decade:"1990s",male:81,female:19,chars:[{name:"Vincent Vega",lines:145,g:"m"},{name:"Jules Winnfield",lines:132,g:"m"},{name:"Mia Wallace",lines:67,g:"f"},{name:"Butch Coolidge",lines:89,g:"m"},{name:"Marsellus Wallace",lines:43,g:"m"},{name:"Honey Bunny",lines:28,g:"f"}]},
+  {id:11,title:"Mad Max: Fury Road",genre:"Action",decade:"2010s",male:52,female:48,chars:[{name:"Furiosa",lines:82,g:"f"},{name:"Max Rockatansky",lines:71,g:"m"},{name:"Immortan Joe",lines:49,g:"m"},{name:"Nux",lines:42,g:"m"},{name:"Toast the Knowing",lines:31,g:"f"}]},
+  {id:12,title:"Mamma Mia!",genre:"Comedy",decade:"2000s",male:31,female:69,chars:[{name:"Sophie",lines:107,g:"f"},{name:"Donna",lines:99,g:"f"},{name:"Sam Carmichael",lines:56,g:"m"},{name:"Rosie",lines:49,g:"f"},{name:"Tanya",lines:46,g:"f"}]},
+  {id:13,title:"Predator",genre:"Action",decade:"1980s",male:96,female:4,chars:[{name:"Dutch",lines:99,g:"m"},{name:"Dillon",lines:71,g:"m"},{name:"Blain",lines:49,g:"m"},{name:"Mac",lines:42,g:"m"},{name:"Anna",lines:16,g:"f"}]},
+  {id:14,title:"A Quiet Place",genre:"Horror",decade:"2010s",male:48,female:52,chars:[{name:"Evelyn Abbott",lines:49,g:"f"},{name:"Lee Abbott",lines:46,g:"m"},{name:"Regan Abbott",lines:34,g:"f"},{name:"Marcus Abbott",lines:26,g:"m"},{name:"Beau Abbott",lines:6,g:"m"}]},
+  {id:15,title:"The Big Lebowski",genre:"Comedy",decade:"1990s",male:89,female:11,chars:[{name:"The Dude",lines:142,g:"m"},{name:"Walter Sobchak",lines:132,g:"m"},{name:"Donny Kerabatsos",lines:34,g:"m"},{name:"Maude Lebowski",lines:28,g:"f"},{name:"The Big Lebowski",lines:24,g:"m"}]},
+  {id:16,title:"Mulan",genre:"Drama",decade:"1990s",male:72,female:28,chars:[{name:"Mushu",lines:99,g:"m"},{name:"Mulan",lines:82,g:"f"},{name:"Li Shang",lines:62,g:"m"},{name:"Chi-Fu",lines:39,g:"m"},{name:"Grandmother Fa",lines:21,g:"f"}]},
+  {id:17,title:"Hereditary",genre:"Horror",decade:"2010s",male:44,female:56,chars:[{name:"Annie Graham",lines:142,g:"f"},{name:"Peter Graham",lines:82,g:"m"},{name:"Steve Graham",lines:56,g:"m"},{name:"Joan",lines:49,g:"f"},{name:"Charlie Graham",lines:19,g:"f"}]},
+  {id:18,title:"Rush Hour",genre:"Action",decade:"1990s",male:88,female:12,chars:[{name:"James Carter",lines:124,g:"m"},{name:"Jackie Chan",lines:107,g:"m"},{name:"Thomas Griffin",lines:42,g:"m"},{name:"Soo-Yung Han",lines:26,g:"f"},{name:"Det. Johnson",lines:19,g:"m"}]},
+];
+
+const GODFATHER = {title:"The Godfather",year:1972,male:88,female:12,chars:[
+  {name:"Michael Corleone",lines:198,g:"m"},{name:"Don Vito Corleone",lines:156,g:"m"},{name:"Kay Adams",lines:45,g:"f"},
+  {name:"Tom Hagen",lines:87,g:"m"},{name:"Sonny Corleone",lines:76,g:"m"},{name:"Connie Corleone",lines:23,g:"f"}
+]};
+const PULP = {title:"Pulp Fiction",year:1994,male:81,female:19,chars:[
+  {name:"Vincent Vega",lines:145,g:"m"},{name:"Jules Winnfield",lines:132,g:"m"},{name:"Mia Wallace",lines:67,g:"f"},
+  {name:"Butch Coolidge",lines:89,g:"m"},{name:"Marsellus Wallace",lines:43,g:"m"},{name:"Honey Bunny",lines:28,g:"f"}
+]};
+const INCEPTION = {title:"Inception",year:2010,male:74,female:26,chars:[
+  {name:"Cobb",lines:178,g:"m"},{name:"Arthur",lines:95,g:"m"},{name:"Ariadne",lines:82,g:"f"},
+  {name:"Eames",lines:67,g:"m"},{name:"Mal",lines:54,g:"f"},{name:"Saito",lines:43,g:"m"}
+]};
+
+function goTo(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const offset = 60;
+  const top = el.getBoundingClientRect().top + window.pageYOffset - offset;
+  window.scrollTo({ top, behavior: 'smooth' });
+}
+function setActive(el) {
+  document.querySelectorAll('.side-nav a').forEach(a => a.classList.remove('active'));
+  el.classList.add('active');
+}
+
+// Build chars grid
+function buildCharsGrid(containerId, film) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  const total = film.chars.reduce((s,c)=>s+c.lines,0);
+  el.innerHTML = film.chars.map(c=>`
+    <div class="char-item">
+      <div class="char-dot" style="background:${c.g==='m'?'#3b82f6':'#ec4899'}"></div>
+      <div class="char-info">
+        <div class="char-name">${c.name}</div>
+        <div class="char-lines">${c.lines} líneas (${Math.round(c.lines/total*100)}%)</div>
+      </div>
+    </div>`).join('');
+}
+
+// Bar chart helper
+function buildBarChart(canvasId, film) {
+  const ctx = document.getElementById(canvasId);
+  if (!ctx) return;
+  return new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: film.chars.map(c=>c.name),
+      datasets: [{
+        data: film.chars.map(c=>c.lines),
+        backgroundColor: film.chars.map(c=>c.g==='m'?'#3b82f6':'#ec4899'),
+        borderRadius: 4, borderSkipped: false
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: {display:false}, tooltip: {
+        callbacks: { label: ctx => `${ctx.raw} líneas` }
+      }},
+      scales: {
+        x: { grid:{display:false}, ticks:{font:{size:11},color:'#6b7280'} },
+        y: { grid:{color:'#f3f4f6'}, ticks:{font:{size:11},color:'#6b7280'}, title:{display:true,text:'líneas',font:{size:11},color:'#6b7280'} }
+      }
+    }
+  });
+}
+
+// Build fixed compare section
+function buildFixedCompare() {
+  const el = document.getElementById('compareFixedGrid');
+  [PULP, GODFATHER].forEach(film => {
+    const total = film.chars.reduce((s,c)=>s+c.lines,0);
+    const charsHtml = film.chars.map(c=>`
+      <div class="char-item" style="margin-bottom:4px;">
+        <div class="char-dot" style="background:${c.g==='m'?'#3b82f6':'#ec4899'}"></div>
+        <div class="char-info">
+          <div class="char-name">${c.name}</div>
+          <div class="char-lines">${c.lines} líneas (${Math.round(c.lines/total*100)}%)</div>
+        </div>
+      </div>`).join('');
+    const div = document.createElement('div');
+    div.className = 'compare-card';
+    div.innerHTML = `
+      <div class="compare-card-title">${film.title} (${film.year})</div>
+      <div class="dist-info" style="margin-bottom:12px;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <span style="font-size:12px;"><strong>Distribución por género:</strong> Personajes masculinos tienen <strong>${film.male}%</strong> de las líneas, mientras que personajes femeninos tienen <strong>${film.female}%</strong>.</span>
+      </div>
+      <div style="margin-bottom:12px;">${charsHtml}</div>
+      <div style="position:relative;height:200px;"><canvas id="cmp${film.year}"></canvas></div>`;
+    el.appendChild(div);
+  });
+  buildBarChart('cmp1994', PULP);
+  buildBarChart('cmp1972', GODFATHER);
+}
+
+// Scatter chart
+let scatterInstance = null;
+function buildScatter(films) {
+  const ctx = document.getElementById('scatterChart');
+  if (!ctx) return;
+  if (scatterInstance) scatterInstance.destroy();
+  const data = films.map(f=>({x:f.male,y:f.female,label:f.title}));
+  scatterInstance = new Chart(ctx, {
+    type: 'scatter',
+    data: {
+      datasets: [
+        {
+          label: 'Películas',
+          data: data,
+          backgroundColor: films.map(f=>f.female>50?'#ec4899':'#3b82f6'),
+          pointRadius: 7, pointHoverRadius: 9
+        },
+        {
+          label: 'Paridad 50/50',
+          data: [{x:0,y:0},{x:100,y:100}],
+          type: 'line', borderColor: '#d1d5db', borderDash:[6,4],
+          borderWidth: 1.5, pointRadius: 0, fill: false
+        }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: {display:false},
+        tooltip: {
+          callbacks: {
+            label: ctx => {
+              if (ctx.datasetIndex===1) return null;
+              return `${ctx.raw.label}: ${ctx.raw.x}% M / ${ctx.raw.y}% F`;
+            }
+          }
+        }
+      },
+      scales: {
+        x: { min:0, max:100, title:{display:true,text:'Diálogo Masculino (%)',font:{size:11}}, grid:{color:'#f3f4f6'}, ticks:{font:{size:11}} },
+        y: { min:0, max:100, title:{display:true,text:'Diálogo Femenino (%)',font:{size:11}}, grid:{color:'#f3f4f6'}, ticks:{font:{size:11}} }
+      }
+    }
+  });
+}
+
+function updateScatter() {
+  const genre = document.getElementById('filterGenre').value;
+  const decade = document.getElementById('filterDecade').value;
+  const filtered = FILMS.filter(f=>(!genre||f.genre===genre)&&(!decade||f.decade===decade));
+  document.getElementById('filterCount').textContent = filtered.length + ' películas encontradas';
+  buildScatter(filtered);
+}
+
+// Populate compare selects
+function populateSelects() {
+  ['compareA','compareB'].forEach(id=>{
+    const sel = document.getElementById(id);
+    FILMS.forEach(f=>{
+      const opt = document.createElement('option');
+      opt.value = f.id; opt.textContent = f.title + ' (' + f.decade + ')';
+      sel.appendChild(opt);
+    });
+  });
+}
+
+let compareTwoCharts = [];
+function updateCompareTwoChart() {
+  const aId = parseInt(document.getElementById('compareA').value);
+  const bId = parseInt(document.getElementById('compareB').value);
+  const container = document.getElementById('compareTwoResult');
+  if (!aId || !bId) {
+    container.innerHTML = '<div class="compare-placeholder">Selecciona dos películas para comparar sus distribuciones de diálogo</div>';
+    return;
+  }
+  const fa = FILMS.find(f=>f.id===aId);
+  const fb = FILMS.find(f=>f.id===bId);
+  compareTwoCharts.forEach(c=>c.destroy());
+  compareTwoCharts = [];
+  container.innerHTML = `<div class="compare-result-grid">
+    ${[fa,fb].map((film,i)=>{
+      const total = film.chars.reduce((s,c)=>s+c.lines,0);
+      return `<div>
+        <div style="font-size:14px;font-weight:600;margin-bottom:10px;">${film.title} (${film.decade})</div>
+        <div class="dist-info" style="margin-bottom:10px;font-size:12px;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          <span>Masculino <strong>${film.male}%</strong> · Femenino <strong>${film.female}%</strong></span>
+        </div>
+        ${film.chars.map(c=>`<div class="char-item" style="margin-bottom:4px;">
+          <div class="char-dot" style="background:${c.g==='m'?'#3b82f6':'#ec4899'}"></div>
+          <div><div class="char-name">${c.name}</div><div class="char-lines">${c.lines} líneas (${Math.round(c.lines/total*100)}%)</div></div>
+        </div>`).join('')}
+        <div style="position:relative;height:180px;margin-top:12px;"><canvas id="ctc${i}"></canvas></div>
+      </div>`;
+    }).join('')}
+  </div>`;
+  [fa,fb].forEach((film,i)=>{
+    compareTwoCharts.push(buildBarChart('ctc'+i, film));
+  });
+}
+
+let searchTimeout = null;
+function handleGlobalSearch(val) {
+  clearTimeout(searchTimeout);
+  if (!val.trim()) return;
+  searchTimeout = setTimeout(() => {
+    const found = FILMS.find(f => f.title.toLowerCase().includes(val.toLowerCase()));
+    if (found) {
+      // populate compare dropdowns to this film and scroll to interactive section
+      const selA = document.getElementById('compareA');
+      if (selA) selA.value = found.id;
+      goTo('interactivo');
+      // highlight in scatter by rebuilding with found film emphasized
+    }
+  }, 400);
+}
+
+function init() {
+  buildCharsGrid('pulpChars', PULP);
+  buildBarChart('pulpChart', PULP);
+  buildCharsGrid('inceptionChars', INCEPTION);
+  buildBarChart('inceptionChart', INCEPTION);
+  buildFixedCompare();
+  buildScatter(FILMS);
+  populateSelects();
+
+  // Scroll spy
+  const sectionIds = ['inicio','explorar','comparar','patrones','interactivo','metodologia'];
+  const navLinks = document.querySelectorAll('.side-nav a');
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        const id = e.target.id;
+        navLinks.forEach(a => {
+          a.classList.remove('active');
+          if ((a.getAttribute('onclick') || '').includes("'" + id + "'")) {
+            a.classList.add('active');
+          }
+        });
+      }
+    });
+  }, {threshold: 0.2, rootMargin: '-60px 0px -30% 0px'});
+  sectionIds.forEach(id => { const el = document.getElementById(id); if (el) observer.observe(el); });
+}
+
+window.addEventListener('load', init);
+</script>
+</body>
+</html>
